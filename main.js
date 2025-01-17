@@ -81,7 +81,7 @@ function filterEllipse(bgMask, hsvImg, drawImg, lowerRange, upperRange, nameIfCi
             let maskEllipse = new cv.Mat.zeros(mask.rows, mask.cols, cv.CV_8U);
             cv.ellipse1(maskEllipse, ellipse, new cv.Scalar(255, 255, 255), -1, cv.LINE_8);
 
-            cv.imshow('canvasDebug', maskEllipse);
+            // cv.imshow('canvasDebug', maskEllipse);
 
             let maskContour = new cv.Mat.zeros(mask.rows, mask.cols, cv.CV_8U);
             cv.drawContours(maskContour, contours, i, new cv.Scalar(255, 255, 255), cv.FILLED);
@@ -132,7 +132,6 @@ function calculateDistance(point1, point2) {
 
 
 function filterBackground(origImg, drawImg) {
-
     let gray = new cv.Mat();
     cv.cvtColor(origImg, gray, cv.COLOR_BGR2GRAY);
 
@@ -224,7 +223,6 @@ function filterBackground(origImg, drawImg) {
 
     let outerMask = new cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8U);
     let innerMask = new cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8U);
-    let regularMask = new cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8U);
 
     let rect = cv.minAreaRect(hull);
     let box = cv.RotatedRect.points(rect);
@@ -237,7 +235,6 @@ function filterBackground(origImg, drawImg) {
 
     let enlargedBoxMat = cv.matFromArray(4, 1, cv.CV_32SC2, enlargedBox.map(p => [p.x, p.y]).flat(2));
     let reducedBoxMat = cv.matFromArray(4, 1, cv.CV_32SC2, reducedBox.map(p => [p.x, p.y]).flat(2));
-    let boxMat = cv.matFromArray(4, 1, cv.CV_32SC2, box.map(p => [p.x, p.y]).flat(2));
 
     for (let i = 0; i < 4; i++) {
         cv.line(drawImg, enlargedBox[i], enlargedBox[(i + 1) % 4], new cv.Scalar(0, 0, 255), 2, cv.LINE_AA, 0);
@@ -253,11 +250,6 @@ function filterBackground(origImg, drawImg) {
     reducedBoxMat2.push_back(reducedBoxMat);
     cv.fillPoly(innerMask, reducedBoxMat2, new cv.Scalar(255, 255, 255));
 
-    let boxMat2 = new cv.MatVector();
-    boxMat2.push_back(boxMat);
-    cv.fillPoly(regularMask, boxMat2, new cv.Scalar(255, 255, 255));
-
-
     gray.delete();
     blurred.delete();
     edges.delete();
@@ -269,10 +261,8 @@ function filterBackground(origImg, drawImg) {
     reducedBoxMat.delete();
     enlargedBoxMat2.delete();
     reducedBoxMat2.delete();
-    boxMat.delete();
-    boxMat2.delete();
 
-    return [outerMask, innerMask, regularMask];
+    return [outerMask, innerMask];
 }
 
 function getBorderType(bgMask, insideMask, hsv, drawImg, vars) {
@@ -299,9 +289,10 @@ function getBorderType(bgMask, insideMask, hsv, drawImg, vars) {
 
 function lookup(img) {
     let drawImg = img.clone();
-    let [bgMask, insideMask, regularMask] = filterBackground(img, drawImg);
+    let [bgMask, insideMask] = filterBackground(img, drawImg);
+
     if (bgMask === 0) {
-        return drawImg;
+        return [drawImg, new Set(), -1];
     }
 
     let hsv = new cv.Mat();
@@ -325,7 +316,6 @@ function lookup(img) {
 
     bgMask.delete();
     insideMask.delete();
-    regularMask.delete();
     hsv.delete();
 
     return [drawImg, found, borderType];
