@@ -104,17 +104,8 @@
             video.src = img;
         }
 
-        // function analyze(src) {
-        //     let dst = new cv.Mat();
-        //     cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
-        //     cv.imshow('canvas', dst);
-        //     return dst;
-        // }
-
         function onOpenCvReady() {
             cv['onRuntimeInitialized']=()=>{
-                // initRecognition();
-
                 let video = document.getElementById('video');
                 let src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
                 let dst = new cv.Mat(video.height, video.width, cv.CV_8UC4);
