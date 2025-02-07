@@ -85,7 +85,7 @@ function filterEllipse(bgMask, hsvImg, drawImg, lowerRange, upperRange, nameIfCi
         let boundingRect = cv.boundingRect(contour);
         let ellipse = cv.fitEllipse(contour);
 
-        // Порівнюємо контур з підібраним еліпсом
+        // Порівнюємо контур з намальованим еліпсом
         let maskEllipse = new cv.Mat.zeros(mask.rows, mask.cols, cv.CV_8U);
         let maskContour = new cv.Mat.zeros(mask.rows, mask.cols, cv.CV_8U);
         let diff = new cv.Mat();
@@ -94,7 +94,7 @@ function filterEllipse(bgMask, hsvImg, drawImg, lowerRange, upperRange, nameIfCi
         cv.drawContours(maskContour, contours, i, new cv.Scalar(255, 255, 255), cv.FILLED);
         cv.absdiff(maskContour, maskEllipse, diff);
 
-        // Визначаємо тип форми та малюємо
+        // Визначаємо, еліпс чи ні
         let isNonElliptical = cv.countNonZero(diff) / area > 0.1;
         let figure;
         let yShift = 0;
@@ -151,7 +151,7 @@ function filterBackground(origImg, drawImg) {
     let hierarchy = new cv.Mat();
     cv.findContours(edges, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-    // Фільтруємо та вибираємо валідні контури
+    // Фільтруємо та обираємо валідні контури
     let selected_contours = new cv.MatVector();
     for (let i = 0; i < contours.size(); i++) {
         let contour = contours.get(i);
@@ -174,6 +174,7 @@ function filterBackground(origImg, drawImg) {
 
         // Обчислюємо середній кут між точками
         let avg_angle = calculateAverageAngle(approx);
+        
         if ((0.8 * Math.PI / 2 < avg_angle) && (avg_angle < 1.5 * Math.PI / 2)) {
             selected_contours.push_back(contour);
         }
@@ -336,6 +337,62 @@ function getBorderType(bgMask, insideMask, hsv, drawImg, vars) {
     return maxColorName;
 }
 
+// Перелік органел, які очікуються у кожному типі клітини
+const organellesForCellType = {
+    'Animal':       ['Nucleus', 'Mitochondria', 'Golgi', 'ER', 'Ribosome'],
+    'Plant':        ['Nucleus', 'Golgi', 'ER', 'Lysosome', 'Chloroplast'],
+    'Bacteria':     ['Circular DNA', 'Ribosome'],
+    'Fungi':        ['Nucleus', 'Mitochondria', 'Golgi', 'ER', 'Ribosome', 'Vacuole']
+};
+
+// Перевіряє, чи клітина містить всі "обов'язкові" органели для свого типу
+function isValidCellComposition(borderType, foundOrganelles) {
+    // Якщо тип клітини невідомий або не має вимог
+    if (!organellesForCellType[borderType]) {
+        return false;
+    }
+
+    // Перевіряємо, чи всі потрібні органели входять у набір знайдених
+    return organellesForCellType[borderType].every(
+        (orgName) => foundOrganelles.has(orgName)
+    );
+}
+
+// Малює зелену галочку або червоний хрест залежно від результату
+function drawValidationMark(drawImg, isValid) {
+    // Товщина ліній та координати у верхньому правому куті
+    let thickness = 10;
+    let cx = drawImg.cols - 80; // Зміщення від правого краю
+    let cy = 80; // Зміщення від верхнього краю
+    let size = 30; // Розмір позначки
+
+    if (isValid) {
+        // Якщо усі необхідні органели знайдені, малюємо зелену галочку
+        let green = new cv.Scalar(0, 255, 0);
+        let black = new cv.Scalar(0, 0, 0);
+
+        // Чорна обводка галочки
+        cv.line(drawImg, new cv.Point(cx - size, cy), new cv.Point(cx - size/2, cy + size/2), black, thickness + 4);
+        cv.line(drawImg, new cv.Point(cx - size/2, cy + size/2), new cv.Point(cx + size, cy - size), black, thickness + 4);
+
+        // Зелена галочка
+        cv.line(drawImg, new cv.Point(cx - size, cy), new cv.Point(cx - size/2, cy + size/2), green, thickness);
+        cv.line(drawImg, new cv.Point(cx - size/2, cy + size/2), new cv.Point(cx + size, cy - size), green, thickness);
+    } else {
+        // Якщо не всі органели знайдені, малюємо червоний хрест
+        let red = new cv.Scalar(0, 0, 255);
+        let black = new cv.Scalar(0, 0, 0);
+
+        // Чорна обводка хреста
+        cv.line(drawImg, new cv.Point(cx - size, cy - size), new cv.Point(cx + size, cy + size), black, thickness + 4);
+        cv.line(drawImg, new cv.Point(cx - size, cy + size), new cv.Point(cx + size, cy - size), black, thickness + 4);
+
+        // Червоний хрест
+        cv.line(drawImg, new cv.Point(cx - size, cy - size), new cv.Point(cx + size, cy + size), red, thickness);
+        cv.line(drawImg, new cv.Point(cx - size, cy + size), new cv.Point(cx + size, cy - size), red, thickness);
+    }
+}
+
 // Головна функція розпізнавання зображення
 function lookup(img) {
     let drawImg = img.clone();
@@ -372,6 +429,11 @@ function lookup(img) {
     let found = [...foundRed, ...foundYellow, ...foundWhite, ...foundDarkBlue, ...foundOrange, ...foundGreen, ...foundPurple];
     // Видаляємо дублікати
     found = new Set(found);
+
+    // Перевіряємо коректність клітини
+    const isValid = isValidCellComposition(borderType, found);
+    // Малюємо відповідну позначку
+    drawValidationMark(drawImg, isValid);
 
     // Очищення пам'яті
     cleanupMats([bgMask, insideMask, hsv]);

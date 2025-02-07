@@ -120,7 +120,6 @@
             navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia || navigator.oGetUserMedia;
 
             if (navigator.getUserMedia) {
-                // alert('hello');
                 navigator.getUserMedia( {
                         video : true
                     },
@@ -150,29 +149,29 @@
                 // Get the canvas context and set color space
                 let ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
                 
-                let src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
-                let dst = new cv.Mat(video.height, video.width, cv.CV_8UC4);
                 let cap = new cv.VideoCapture(video);
 
                 const FPS = 1;
 
                 function processVideo() {
                     try {
-                        if (!streaming) {
-                            src.delete();
-                            dst.delete();
-                            return;
-                        }
-                        let begin = Date.now();
+                        let src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
+
                         cap.read(src);
                         
-                        // Ensure correct color space before processing
+                        // Перетворимо у простор кольорів RGB перед обробкою
                         cv.cvtColor(src, src, cv.COLOR_RGBA2RGB);
+                        
                         let [dst, items, cell] = lookup(src);
                         cv.imshow('canvas', dst);
                         
+                        let begin = Date.now();
                         let delay = 1000 / FPS - (Date.now() - begin);
                         setTimeout(processVideo, delay);
+                        
+                        src.delete();
+                        dst.delete();
+                    
                     } catch (err) {
                         console.log(err);
                     }
