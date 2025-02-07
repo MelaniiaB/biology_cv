@@ -1,21 +1,21 @@
-Recognition of Biological Cell Organs through Computer Vision
-============================================================
+Розпізнавання органел біологічних клітин за допомогою комп'ютерного зору
+======================================================================
 
-This project is a part of STEM week. The goal of this project is to recognize the biological cell organs through computer vision. The project is divided into two parts: the first part is to recognize the cell organs through the image and the second part is to recognize the cell organs through the video. The project is implemented in Python using OpenCV.
+Цей проект є частиною STEM-тижня. Мета проекту - розпізнавання органел біологічних клітин за допомогою комп'ютерного зору. Проект розділений на дві частини: перша частина - розпізнавання органел клітин через зображення, друга частина - розпізнавання органел клітин через відео. 
 
-## Implementation
+## Реалізація
 
-First iteration was implemented in Python using OpenCV.
+Перша ітерація була реалізована на Python з використанням OpenCV.
 
-In the second iteration, the project is rewritten in JavaScript using OpenCV.js, to make it accessible through the web browser.
+У другій ітерації проект був переписаний на JavaScript з використанням OpenCV.js, щоб зробити його доступним через веб-браузер.
 
-## Cell types to be recognized
+## Типи клітин для розпізнавання
 
-- Animal cell
-- Plant cell
-- Bacterial cell
-- Fungal cell
+- Тваринна клітина
+- Рослинна клітина
+- Бактеріальна клітина
+- Грибкова клітина
 
-## Demo
+## Демонстрація
 
-![Demo](demo.gif)
+![Демонстрація](demo.gif)
