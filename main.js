@@ -1,4 +1,5 @@
 // Створює змінні для обробки зображення
+// Якісь зміни
 function varsForSource(src) {
     return {
         DEBUG: true,
