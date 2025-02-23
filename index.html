@@ -5,8 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Розпізнавання конструктору біологічних клітин</title>
-    <script src="main.js" type="text/javascript"></script>
-    <meta charset="utf-8">
+
+    <link rel="stylesheet" href="https://pyscript.net/releases/2025.2.2/core.css">
+    <script type="module" src="https://pyscript.net/releases/2025.2.2/core.js"></script>
 
     <style>
         body {
@@ -66,16 +67,25 @@
             object-fit: contain;
             aspect-ratio: 4/3;
             /* Remove any potential color transformations */
+            background-color: wheat;
             filter: none;
         }
 
-        #video-container video {
+        #video-container canvas {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
             aspect-ratio: 4/3;
             /* Remove any potential color transformations */
             filter: none;
+        }
+
+        #video-container video {
+            display: none;
+        }
+
+        #video-container img {
+            display: none;
         }
 
         @media (max-width: 768px) {
@@ -98,7 +108,30 @@
 </head>
 
 <body>
-    <span class="title">Biology CV</span>
+    <span class="title">Biology CV
+        <select id="source-select" style="margin-left: 8px; padding: 4px; border-radius: 4px;" onchange="document.getElementById('static-image').src = this.value">
+            <option value="camera" selected>Camera Input</option>
+            <option value="images/test.jpg">Static Image (test.jpg)</option>
+            <option value="images/1.jpg">Static Image (1.jpg)</option>
+            <option value="images/1-1.jpg">Static Image (1-1.jpg)</option>
+            <option value="images/1-2.jpg">Static Image (1-2.jpg)</option>
+            <option value="images/2.jpg">Static Image (2.jpg)</option>
+            <option value="images/2-1.jpg">Static Image (2-1.jpg)</option>
+            <option value="images/2-2.jpg">Static Image (2-2.jpg)</option>
+            <option value="images/3.jpg">Static Image (3.jpg)</option>
+            <option value="images/3-1.jpg">Static Image (3-1.jpg)</option>
+            <option value="images/3-2.jpg">Static Image (3-2.jpg)</option>
+            <option value="images/4.jpg">Static Image (4.jpg)</option>
+            <option value="images/4-1.jpg">Static Image (4-1.jpg)</option>
+            <option value="images/5.jpg">Static Image (5.jpg)</option>
+        </select></span>
+
+    <script>
+        window.onload = function() {
+            const select = document.getElementById('source-select');
+            document.getElementById('static-image').src = select.value;
+        }
+    </script>
 
     <div class="content-wrapper">
         <div id="canvas-container">
@@ -106,84 +139,16 @@
         </div>
 
         <div id="video-container">
-            <video id="video" width="640" height="480" autoplay playsinline></video>
+            <canvas id="input" width="640" height="480"></canvas>
+            <video id="video" width="640" autoplay playsinline></video>
+            <img src="test.jpg" id="static-image">
         </div>
     </div>
-    <!-- <canvas id="canvasDebug" width="640" height="480"></canvas> -->
+    <py-config>
+        packages = ["numpy", "opencv-python"]
+    </py-config>
 
-    <script>
-        var streaming = true;
-
-        function initCamera() {
-            var video = document.querySelector("#video");
-
-            navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia || navigator.oGetUserMedia;
-
-            if (navigator.getUserMedia) {
-                navigator.getUserMedia( {
-                        video : true
-                    },
-                    handleVideo, videoError);
-            }
-
-            function handleVideo(stream) {
-                video.srcObject = stream;
-            }
-
-            function videoError(e) {
-                // do something
-            }
-        }
-
-        function initStatic(img) {
-            var video = document.querySelector("#video");
-
-            // set video source to the static image
-            video.src = img;
-        }
-
-        function onOpenCvReady() {
-            cv['onRuntimeInitialized']=()=>{
-                let video = document.getElementById('video');
-                let canvas = document.getElementById('canvas');
-                // Get the canvas context and set color space
-                let ctx = canvas.getContext('2d', { colorSpace: 'srgb' });
-                
-                let cap = new cv.VideoCapture(video);
-
-                const FPS = 1;
-
-                function processVideo() {
-                    try {
-                        let src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
-
-                        cap.read(src);
-                        
-                        // Перетворимо у простор кольорів RGB перед обробкою
-                        cv.cvtColor(src, src, cv.COLOR_RGBA2RGB);
-                        
-                        let [dst, items, cell] = lookup(src);
-                        cv.imshow('canvas', dst);
-                        
-                        let begin = Date.now();
-                        let delay = 1000 / FPS - (Date.now() - begin);
-                        setTimeout(processVideo, delay);
-                        
-                        src.delete();
-                        dst.delete();
-                    
-                    } catch (err) {
-                        console.log(err);
-                    }
-                }
-
-                setTimeout(processVideo, 1500);
-                initStatic("./test.mp4");
-            };
-        }
-    </script>
-
-    <script src="https://docs.opencv.org/4.5.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+    <py-script src="main.py"></py-script>
 </body>
 
 </html>
