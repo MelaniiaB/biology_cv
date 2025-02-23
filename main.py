@@ -271,25 +271,30 @@ static_image = js.document.querySelector("#static-image")
 
 def process_video():
     ctx = input.getContext('2d')
+
     if source.value == "camera":
-        ctx.drawImage(video, 0, 0, input.width, input.height)
+        src = video
+        src_width = video.videoWidth
+        src_height = video.videoHeight
     else:
-        height_ratio = static_image.height / input.height
-        rotate = static_image.width / static_image.height < 1.0
+        src = static_image
+        src_width = static_image.width
+        src_height = static_image.height
+
+    rotate = src_width < src_height
+    if rotate:
         print(rotate)
-        if rotate:
-            width_ratio = static_image.width / input.height
-            height_shift = abs(static_image.height / width_ratio - input.width)
-            print(height_ratio, input.width, static_image.height, height_shift)
+        width_ratio = src_width / input.height
+        height_shift = abs(src_height / width_ratio - input.width)
 
-            ctx.rotate(np.pi / 2)
-            ctx.drawImage(static_image, 0, -input.width - height_shift / 2, input.height, static_image.height / width_ratio)
-        else:
-            height_ratio = static_image.height / input.height
-            width_shift = abs(static_image.width / height_ratio - input.width)
-            ctx.drawImage(static_image, -width_shift / 2, 0, static_image.width / height_ratio, input.height)
+        ctx.rotate(np.pi / 2)
+        ctx.drawImage(src, 0, -input.width - height_shift / 2, input.height, src_height / width_ratio)
+    else:
+        height_ratio = src_height / input.height
+        width_shift = abs(src_width / height_ratio - input.width)
+        ctx.drawImage(src, -width_shift / 2, 0, src_width / height_ratio, input.height)
 
-        ctx.resetTransform()
+    ctx.resetTransform()
 
     width = input.width
     height = input.height
