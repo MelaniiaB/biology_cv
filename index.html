@@ -110,21 +110,23 @@
 <body>
     <span class="title">Biology CV
         <select id="source-select" style="margin-left: 8px; padding: 4px; border-radius: 4px;" onchange="document.getElementById('static-image').src = this.value">
-            <option value="camera" selected>Camera Input</option>
-            <option value="images/test.jpg">Static Image (test.jpg)</option>
-            <option value="images/1.jpg">Static Image (1.jpg)</option>
-            <option value="images/1-1.jpg">Static Image (1-1.jpg)</option>
-            <option value="images/1-2.jpg">Static Image (1-2.jpg)</option>
-            <option value="images/2.jpg">Static Image (2.jpg)</option>
-            <option value="images/2-1.jpg">Static Image (2-1.jpg)</option>
-            <option value="images/2-2.jpg">Static Image (2-2.jpg)</option>
-            <option value="images/3.jpg">Static Image (3.jpg)</option>
-            <option value="images/3-1.jpg">Static Image (3-1.jpg)</option>
-            <option value="images/3-2.jpg">Static Image (3-2.jpg)</option>
-            <option value="images/4.jpg">Static Image (4.jpg)</option>
-            <option value="images/4-1.jpg">Static Image (4-1.jpg)</option>
-            <option value="images/5.jpg">Static Image (5.jpg)</option>
-        </select></span>
+            <option value="camera" selected>Camera</option>
+            <option value="images/test.jpg">test.jpg</option>
+            <option value="images/1.jpg">1.jpg</option>
+            <option value="images/1-1.jpg">1-1.jpg</option>
+            <option value="images/1-2.jpg">1-2.jpg</option>
+            <option value="images/2.jpg">2.jpg</option>
+            <option value="images/2-1.jpg">2-1.jpg</option>
+            <option value="images/2-2.jpg">2-2.jpg</option>
+            <option value="images/3.jpg">3.jpg</option>
+            <option value="images/3-1.jpg">3-1.jpg</option>
+            <option value="images/3-2.jpg">3-2.jpg</option>
+            <option value="images/4.jpg">4.jpg</option>
+            <option value="images/4-1.jpg">4-1.jpg</option>
+            <option value="images/5.jpg">5.jpg</option>
+        </select>
+        <button id="switch-camera" style="margin-left: 8px; padding: 4px; border-radius: 4px;">📷</button>
+    </span>
 
     <script>
         window.onload = function() {

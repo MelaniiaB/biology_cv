@@ -145,7 +145,7 @@ def filter_background(orig_img, draw_img):
                 selected_contours.append(contour)
 
     if len(selected_contours) == 0:
-        return None, None, None, draw_img
+        return None, None, draw_img
     
     points = np.concatenate(selected_contours)
 
@@ -259,6 +259,7 @@ def lookup(img):
 
 import js
 from pyodide.ffi.wrappers import set_interval
+from pyscript import when
 from js import Uint8Array, Uint8ClampedArray, ImageData
 
 video = js.document.querySelector("#video")
@@ -305,14 +306,34 @@ def process_video():
     canvas.getContext('2d').putImageData(new_image_data, 0, 0)
 
 
-async def start_camera():
+async def start_camera(camera_id=None):
     media = js.Object.new()
     media.audio = False
     media.video = js.Object.new()
-    media.video.facingMode = "environment"
+    if camera_id:
+        media.video.deviceId = camera_id
     stream = await js.navigator.mediaDevices.getUserMedia(media)
     video.srcObject = stream
     set_interval(process_video, 2000)
+
+
+available_cameras = []
+current_camera_index = 0
+
+
+@when("click", "#switch-camera")
+async def switch_camera():
+    global available_cameras, current_camera_index
+    if not available_cameras:
+        devices = await js.navigator.mediaDevices.enumerateDevices()
+        available_cameras = [d for d in devices if d.kind == "videoinput"]
+        print(available_cameras)
+
+    if len(available_cameras) > 1:
+        current_camera_index = (current_camera_index + 1) % len(available_cameras)
+        await start_camera(
+            available_cameras[current_camera_index].deviceId
+        )
 
 
 start_camera()
