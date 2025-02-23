@@ -308,7 +308,8 @@ def process_video():
 async def start_camera():
     media = js.Object.new()
     media.audio = False
-    media.video = True
+    media.video = js.Object.new()
+    media.video.facingMode = "environment"
     stream = await js.navigator.mediaDevices.getUserMedia(media)
     video.srcObject = stream
     set_interval(process_video, 2000)
