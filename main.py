@@ -335,10 +335,19 @@ async def switch_camera():
         print(available_cameras)
 
     if len(available_cameras) > 1:
+        if video.srcObject:
+            tracks = video.srcObject.getTracks()
+            for track in tracks:
+                track.stop() 
+            video.srcObject = None
+                
         current_camera_index = (current_camera_index + 1) % len(available_cameras)
+        
+        input.getContext('2d').resetTransform()
+        canvas.getContext('2d').resetTransform()
+
         await start_camera(
             available_cameras[current_camera_index].deviceId
         )
-
 
 start_camera()
