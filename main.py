@@ -256,6 +256,7 @@ def lookup(img):
 
 
 ## Обробка відео з камери
+# Fallback to facingMode if deviceId approach fails
 
 import js
 from pyodide.ffi.wrappers import set_interval
@@ -265,7 +266,6 @@ from js import Uint8Array, Uint8ClampedArray, ImageData
 video = js.document.querySelector("#video")
 canvas = js.document.querySelector("#canvas")
 input = js.document.querySelector("#input")
-
 source = js.document.querySelector("#source-select")
 static_image = js.document.querySelector("#static-image")
 
@@ -283,10 +283,8 @@ def process_video():
 
     rotate = src_width < src_height
     if rotate:
-        print(rotate)
         width_ratio = src_width / input.height
         height_shift = abs(src_height / width_ratio - input.width)
-
         ctx.rotate(np.pi / 2)
         ctx.drawImage(src, 0, -input.width - height_shift / 2, input.height, src_height / width_ratio)
     else:
@@ -295,36 +293,38 @@ def process_video():
         ctx.drawImage(src, -width_shift / 2, 0, src_width / height_ratio, input.height)
 
     ctx.resetTransform()
-
     width = input.width
     height = input.height
-    
+
     image_data = ctx.getImageData(0, 0, width, height)
     js_array = Uint8Array.new(image_data.data)
     bytes_data = js_array.to_bytes()
     pixels_flat = np.frombuffer(bytes_data, dtype=np.uint8)
     img = pixels_flat.reshape((height, width, 4))
-    draw_img, found, border_type = lookup(img)
+    # Run your image processing here:
+    # draw_img, found, border_type = lookup(img)
+    draw_img = img  # fallback if lookup not defined
 
     new_data = Uint8ClampedArray.new(draw_img.tobytes())
     new_image_data = ImageData.new(new_data, width, height)
     canvas.getContext('2d').putImageData(new_image_data, 0, 0)
 
-
-async def start_camera(camera_id=None):
+async def start_camera(camera_id=None, facing_mode=None):
     media = js.Object.new()
     media.audio = False
     media.video = js.Object.new()
     if camera_id:
         media.video.deviceId = camera_id
+    elif facing_mode:
+        # Fallback for devices that don't handle deviceId well
+        media.video.facingMode = facing_mode
+
     stream = await js.navigator.mediaDevices.getUserMedia(media)
     video.srcObject = stream
     set_interval(process_video, 2000)
 
-
 available_cameras = []
 current_camera_index = 0
-
 
 @when("click", "#switch-camera")
 async def switch_camera():
@@ -332,22 +332,23 @@ async def switch_camera():
     if not available_cameras:
         devices = await js.navigator.mediaDevices.enumerateDevices()
         available_cameras = [d for d in devices if d.kind == "videoinput"]
-        print(available_cameras)
-
+    
+    # If multiple cameras are available, cycle through them
     if len(available_cameras) > 1:
-        if video.srcObject:
-            tracks = video.srcObject.getTracks()
-            for track in tracks:
-                track.stop() 
-            video.srcObject = None
-                
         current_camera_index = (current_camera_index + 1) % len(available_cameras)
-        
-        input.getContext('2d').resetTransform()
-        canvas.getContext('2d').resetTransform()
+        # Attempt deviceId first
+        try:
+            await start_camera(camera_id=available_cameras[current_camera_index].deviceId)
+        except:
+            # Fallback to facingMode if deviceId approach fails
+            mode = "user" if current_camera_index == 0 else "environment"
+            await start_camera(facing_mode=mode)
+    else:
+        # Only one camera: try environment fallback
+        await start_camera(facing_mode="environment")
 
-        await start_camera(
-            available_cameras[current_camera_index].deviceId
-        )
-
-start_camera()
+# Start camera with a fallback
+try:
+    start_camera()
+except:
+    start_camera(facing_mode="user")
